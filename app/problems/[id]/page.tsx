@@ -1,112 +1,57 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, use } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
-import { Code, Play, Send, CheckCircle, XCircle, Clock, ThumbsUp, MessageSquare } from "lucide-react"
+import { Code, ThumbsUp, MessageSquare, Send } from "lucide-react"
 
-const problemData = {
-  id: 1,
-  title: "Two Sum",
-  difficulty: "Easy",
-  category: "Array",
-  acceptance: "85%",
-  submissions: "2.1M",
-  likes: 1247,
-  dislikes: 89,
-  description: `Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.
-
-You may assume that each input would have exactly one solution, and you may not use the same element twice.
-
-You can return the answer in any order.`,
-  examples: [
-    {
-      input: "nums = [2,7,11,15], target = 9",
-      output: "[0,1]",
-      explanation: "Because nums[0] + nums[1] == 9, we return [0, 1].",
-    },
-    {
-      input: "nums = [3,2,4], target = 6",
-      output: "[1,2]",
-      explanation: "Because nums[1] + nums[2] == 6, we return [1, 2].",
-    },
-  ],
-  constraints: [
-    "2 ≤ nums.length ≤ 10⁴",
-    "-10⁹ ≤ nums[i] ≤ 10⁹",
-    "-10⁹ ≤ target ≤ 10⁹",
-    "Only one valid answer exists.",
-  ],
+interface ProblemData {
+  id: number
+  title: string
+  difficulty: string
+  category: string
+  acceptance: string
+  submissions: string
+  likes: number
+  dislikes: number
+  description: string
+  examples: Array<{
+    input: string
+    output: string
+    explanation: string
+  }>
+  constraints: string[]
+  testCases: Array<{
+    input: string
+    expectedOutput: string
+  }>
 }
 
-const defaultCode = {
-  python: `def twoSum(nums, target):
-    """
-    :type nums: List[int]
-    :type target: int
-    :rtype: List[int]
-    """
-    # Your code here
-    pass`,
-  javascript: `/**
- * @param {number[]} nums
- * @param {number} target
- * @return {number[]}
- */
-var twoSum = function(nums, target) {
-    // Your code here
-};`,
-  java: `class Solution {
-    public int[] twoSum(int[] nums, int target) {
-        // Your code here
-        return new int[0];
+export default function ProblemPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = use(params)
+  const [problemData, setProblemData] = useState<ProblemData | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchProblemData()
+  }, [resolvedParams.id])
+
+  const fetchProblemData = async () => {
+    try {
+      const response = await fetch(`/api/problems?id=${resolvedParams.id}`)
+      if (response.ok) {
+        const data = await response.json()
+        setProblemData(data.problem)
+      } else {
+        console.error("Failed to fetch problem data")
+      }
+    } catch (error) {
+      console.error("Error fetching problem data:", error)
+    } finally {
+      setLoading(false)
     }
-}`,
-  cpp: `class Solution {
-public:
-    vector<int> twoSum(vector<int>& nums, int target) {
-        // Your code here
-        return {};
-    }
-};`,
-}
-
-export default function ProblemPage({ params }: { params: { id: string } }) {
-  const [selectedLanguage, setSelectedLanguage] = useState("python")
-  const [code, setCode] = useState(defaultCode.python)
-  const [testResults, setTestResults] = useState<any[]>([])
-  const [isRunning, setIsRunning] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-
-  const handleLanguageChange = (language: string) => {
-    setSelectedLanguage(language)
-    setCode(defaultCode[language as keyof typeof defaultCode])
-  }
-
-  const handleRunCode = async () => {
-    setIsRunning(true)
-    // Simulate running test cases
-    setTimeout(() => {
-      setTestResults([
-        { input: "nums = [2,7,11,15], target = 9", expected: "[0,1]", actual: "[0,1]", passed: true },
-        { input: "nums = [3,2,4], target = 6", expected: "[1,2]", actual: "[1,2]", passed: true },
-        { input: "nums = [3,3], target = 6", expected: "[0,1]", actual: "[0,1]", passed: true },
-      ])
-      setIsRunning(false)
-    }, 2000)
-  }
-
-  const handleSubmit = async () => {
-    setIsSubmitting(true)
-    // Simulate submission
-    setTimeout(() => {
-      setIsSubmitting(false)
-      // Show success message or redirect
-    }, 3000)
   }
 
   const getDifficultyColor = (difficulty: string) => {
@@ -120,6 +65,22 @@ export default function ProblemPage({ params }: { params: { id: string } }) {
       default:
         return "bg-gray-800 text-gray-300 border-gray-600"
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-white">Loading problem...</div>
+      </div>
+    )
+  }
+
+  if (!problemData) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-white">Problem not found</div>
+      </div>
+    )
   }
 
   return (
@@ -158,52 +119,84 @@ export default function ProblemPage({ params }: { params: { id: string } }) {
       </header>
 
       <div className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-[calc(100vh-120px)]">
-          {/* Problem Description */}
-          <div className="space-y-4 overflow-y-auto max-h-[calc(100vh-140px)]">
-            <div className="flex items-center gap-2 mb-4">
-              <Link href="/problems" className="text-purple-400 hover:underline flex items-center gap-1">
-                ← Back to Problems
-              </Link>
-            </div>
+        <div className="max-w-4xl mx-auto">
+          {/* Back Navigation */}
+          <div className="flex items-center gap-2 mb-6">
+            <Link href="/problems" className="text-purple-400 hover:underline flex items-center gap-1">
+              ← Back to Problems
+            </Link>
+          </div>
 
-            <Card className="bg-gray-800 border-gray-700">
-              <CardHeader>
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <CardTitle className="text-2xl text-white mb-2">
-                      {problemData.id}. {problemData.title}
-                    </CardTitle>
-                    <div className="flex items-center gap-2 mb-3">
-                      <Badge variant="secondary" className={getDifficultyColor(problemData.difficulty)}>
-                        {problemData.difficulty}
-                      </Badge>
-                      <Badge variant="outline" className="border-gray-600 text-gray-300">
-                        {problemData.category}
-                      </Badge>
+          {/* Problem Header */}
+          <Card className="bg-gray-800 border-gray-700 mb-6">
+            <CardHeader>
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <CardTitle className="text-3xl text-white mb-3">
+                    {problemData.id}. {problemData.title}
+                  </CardTitle>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Badge variant="secondary" className={getDifficultyColor(problemData.difficulty)}>
+                      {problemData.difficulty}
+                    </Badge>
+                    <Badge variant="outline" className="border-gray-600 text-gray-300">
+                      {problemData.category}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-4 text-sm text-gray-400 flex-wrap">
+                    <span>Acceptance: {problemData.acceptance}</span>
+                    <span>Submissions: {problemData.submissions}</span>
+                    <div className="flex items-center gap-1">
+                      <ThumbsUp className="w-4 h-4" />
+                      <span>{problemData.likes}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <MessageSquare className="w-4 h-4" />
+                      <span>Discuss</span>
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-4 text-sm text-gray-400 flex-wrap">
-                  <span>Acceptance: {problemData.acceptance}</span>
-                  <span>Submissions: {problemData.submissions}</span>
-                  <div className="flex items-center gap-1">
-                    <ThumbsUp className="w-4 h-4" />
-                    <span>{problemData.likes}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <MessageSquare className="w-4 h-4" />
-                    <span>Discuss</span>
-                  </div>
+                <div className="flex-shrink-0">
+                  <Button
+                    asChild
+                    size="lg"
+                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
+                  >
+                    <Link href={`/problems/${problemData.id}/solve`}>
+                      <Send className="w-4 h-4 mr-2" />
+                      Submit Solution
+                    </Link>
+                  </Button>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="prose max-w-none">
-                  <p className="whitespace-pre-line text-gray-300">{problemData.description}</p>
+              </div>
+            </CardHeader>
+          </Card>
 
-                  <h3 className="text-lg font-semibold mt-6 mb-3 text-white">Examples:</h3>
-                  {problemData.examples.map((example, index) => (
-                    <div key={index} className="bg-gray-700 p-4 rounded-lg mb-4">
+          {/* Problem Description */}
+          <Card className="bg-gray-800 border-gray-700 mb-6">
+            <CardHeader>
+              <CardTitle className="text-xl text-white">Problem Description</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="prose max-w-none">
+                <p className="whitespace-pre-line text-gray-300 text-lg leading-relaxed">
+                  {problemData.description}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Examples */}
+          <Card className="bg-gray-800 border-gray-700 mb-6">
+            <CardHeader>
+              <CardTitle className="text-xl text-white">Examples</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {problemData.examples.map((example, index) => (
+                  <div key={index} className="bg-gray-700 p-4 rounded-lg">
+                    <h4 className="font-semibold text-white mb-3">Example {index + 1}:</h4>
+                    <div className="space-y-2">
                       <p className="text-gray-300">
                         <strong className="text-white">Input:</strong> {example.input}
                       </p>
@@ -214,107 +207,73 @@ export default function ProblemPage({ params }: { params: { id: string } }) {
                         <strong className="text-white">Explanation:</strong> {example.explanation}
                       </p>
                     </div>
-                  ))}
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
 
-                  <h3 className="text-lg font-semibold mt-6 mb-3 text-white">Constraints:</h3>
-                  <ul className="list-disc list-inside space-y-1 text-gray-300">
-                    {problemData.constraints.map((constraint, index) => (
-                      <li key={index}>{constraint}</li>
-                    ))}
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          {/* Constraints */}
+          <Card className="bg-gray-800 border-gray-700 mb-6">
+            <CardHeader>
+              <CardTitle className="text-xl text-white">Constraints</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="list-disc list-inside space-y-2 text-gray-300">
+                {problemData.constraints.map((constraint, index) => (
+                  <li key={index} className="text-lg">{constraint}</li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
 
-          {/* Code Editor - ensure proper height and visibility */}
-          <div className="space-y-4">
-            <Card className="h-full flex flex-col bg-gray-800 border-gray-700 min-h-[600px]">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-white">Code Editor</CardTitle>
-                  <Select value={selectedLanguage} onValueChange={handleLanguageChange}>
-                    <SelectTrigger className="w-32 bg-gray-700 border-gray-600 text-white">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-gray-800 border-gray-700">
-                      <SelectItem value="python" className="text-white hover:bg-gray-700">
-                        Python
-                      </SelectItem>
-                      <SelectItem value="javascript" className="text-white hover:bg-gray-700">
-                        JavaScript
-                      </SelectItem>
-                      <SelectItem value="java" className="text-white hover:bg-gray-700">
-                        Java
-                      </SelectItem>
-                      <SelectItem value="cpp" className="text-white hover:bg-gray-700">
-                        C++
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardHeader>
-              <CardContent className="flex-1 flex flex-col">
-                <Textarea
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  className="flex-1 font-mono text-sm resize-none bg-gray-900 border-gray-600 text-gray-100 placeholder:text-gray-500"
-                  placeholder="Write your solution here..."
-                />
-
-                <div className="flex gap-2 mt-4">
-                  <Button
-                    variant="outline"
-                    onClick={handleRunCode}
-                    disabled={isRunning}
-                    className="flex items-center gap-2 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white bg-transparent"
-                  >
-                    {isRunning ? <Clock className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
-                    {isRunning ? "Running..." : "Run Code"}
-                  </Button>
-                  <Button
-                    onClick={handleSubmit}
-                    disabled={isSubmitting}
-                    className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-                  >
-                    {isSubmitting ? <Clock className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                    {isSubmitting ? "Submitting..." : "Submit"}
-                  </Button>
-                </div>
-
-                {/* Test Results */}
-                {testResults.length > 0 && (
-                  <div className="mt-4">
-                    <h3 className="font-semibold mb-2 text-white">Test Results:</h3>
-                    <div className="space-y-2 max-h-40 overflow-y-auto">
-                      {testResults.map((result, index) => (
-                        <div key={index} className="flex items-start gap-2 p-2 bg-gray-700 rounded text-sm">
-                          {result.passed ? (
-                            <CheckCircle className="w-4 h-4 text-green-400 mt-0.5" />
-                          ) : (
-                            <XCircle className="w-4 h-4 text-red-400 mt-0.5" />
-                          )}
-                          <div className="flex-1 text-gray-300">
-                            <p>
-                              <strong className="text-white">Input:</strong> {result.input}
-                            </p>
-                            <p>
-                              <strong className="text-white">Expected:</strong> {result.expected}
-                            </p>
-                            <p>
-                              <strong className="text-white">Actual:</strong> {result.actual}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
+          {/* Test Cases Preview */}
+          <Card className="bg-gray-800 border-gray-700">
+            <CardHeader>
+              <CardTitle className="text-xl text-white">Test Cases</CardTitle>
+              <p className="text-gray-400">These are the test cases your solution will be evaluated against</p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {problemData.testCases.slice(0, 3).map((testCase, index) => (
+                  <div key={index} className="bg-gray-700 p-3 rounded-lg">
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <strong className="text-white">Input:</strong>
+                        <p className="text-gray-300 mt-1">{testCase.input}</p>
+                      </div>
+                      <div>
+                        <strong className="text-white">Expected Output:</strong>
+                        <p className="text-gray-300 mt-1">{testCase.expectedOutput}</p>
+                      </div>
                     </div>
                   </div>
+                ))}
+                {problemData.testCases.length > 3 && (
+                  <p className="text-gray-400 text-center text-sm">
+                    ... and {problemData.testCases.length - 3} more test cases
+                  </p>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Submit Solution Button (Bottom) */}
+          <div className="text-center mt-8">
+            <Button
+              asChild
+              size="lg"
+              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 py-3 text-lg"
+            >
+              <Link href={`/problems/${problemData.id}/solve`}>
+                <Send className="w-5 h-5 mr-2" />
+                Submit Your Solution
+              </Link>
+            </Button>
           </div>
         </div>
       </div>
     </div>
   )
 }
+

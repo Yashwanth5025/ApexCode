@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,95 +9,48 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Code, Search, Filter, CheckCircle, Clock, Star } from "lucide-react"
 
-const problems = [
-  {
-    id: 1,
-    title: "Two Sum",
-    difficulty: "Easy",
-    category: "Array",
-    acceptance: "85%",
-    submissions: "2.1M",
-    solved: true,
-    description:
-      "Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.",
-  },
-  {
-    id: 2,
-    title: "Add Two Numbers",
-    difficulty: "Medium",
-    category: "Linked List",
-    acceptance: "67%",
-    submissions: "1.8M",
-    solved: false,
-    description: "You are given two non-empty linked lists representing two non-negative integers.",
-  },
-  {
-    id: 3,
-    title: "Longest Substring Without Repeating Characters",
-    difficulty: "Medium",
-    category: "String",
-    acceptance: "58%",
-    submissions: "1.5M",
-    solved: true,
-    description: "Given a string s, find the length of the longest substring without repeating characters.",
-  },
-  {
-    id: 4,
-    title: "Median of Two Sorted Arrays",
-    difficulty: "Hard",
-    category: "Array",
-    acceptance: "42%",
-    submissions: "890K",
-    solved: false,
-    description:
-      "Given two sorted arrays nums1 and nums2 of size m and n respectively, return the median of the two sorted arrays.",
-  },
-  {
-    id: 5,
-    title: "Longest Palindromic Substring",
-    difficulty: "Medium",
-    category: "String",
-    acceptance: "52%",
-    submissions: "1.2M",
-    solved: false,
-    description: "Given a string s, return the longest palindromic substring in s.",
-  },
-  {
-    id: 6,
-    title: "ZigZag Conversion",
-    difficulty: "Medium",
-    category: "String",
-    acceptance: "61%",
-    submissions: "780K",
-    solved: true,
-    description: "The string 'PAYPALISHIRING' is written in a zigzag pattern on a given number of rows.",
-  },
-  {
-    id: 7,
-    title: "Reverse Integer",
-    difficulty: "Easy",
-    category: "Math",
-    acceptance: "73%",
-    submissions: "1.9M",
-    solved: false,
-    description: "Given a signed 32-bit integer x, return x with its digits reversed.",
-  },
-  {
-    id: 8,
-    title: "String to Integer (atoi)",
-    difficulty: "Medium",
-    category: "String",
-    acceptance: "28%",
-    submissions: "1.1M",
-    solved: false,
-    description: "Implement the myAtoi(string s) function, which converts a string to a 32-bit signed integer.",
-  },
-]
+interface Problem {
+  id: number
+  title: string
+  difficulty: string
+  category: string
+  acceptance: string
+  submissions: string
+  solved?: boolean
+  description: string
+}
 
 export default function ProblemsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [difficultyFilter, setDifficultyFilter] = useState("all")
   const [categoryFilter, setCategoryFilter] = useState("all")
+  const [problems, setProblems] = useState<Problem[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchProblems()
+  }, [])
+
+  const fetchProblems = async () => {
+    try {
+      const response = await fetch("/api/problems")
+      if (response.ok) {
+        const data = await response.json()
+        // Add solved status randomly for demo purposes
+        const problemsWithSolvedStatus = data.problems.map((problem: Problem) => ({
+          ...problem,
+          solved: Math.random() > 0.5, // Random solved status for demo
+        }))
+        setProblems(problemsWithSolvedStatus)
+      } else {
+        console.error("Failed to fetch problems")
+      }
+    } catch (error) {
+      console.error("Error fetching problems:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const filteredProblems = problems.filter((problem) => {
     const matchesSearch =
@@ -120,6 +73,16 @@ export default function ProblemsPage() {
       default:
         return "bg-gray-800 text-gray-300 border-gray-600"
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-900">
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center text-white">Loading problems...</div>
+        </div>
+      </div>
+    )
   }
 
   return (
