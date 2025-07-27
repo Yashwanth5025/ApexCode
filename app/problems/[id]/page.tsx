@@ -158,31 +158,33 @@ export default function ProblemPage({ params }: { params: { id: string } }) {
       </header>
 
       <div className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-120px)]">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-[calc(100vh-120px)]">
           {/* Problem Description */}
-          <div className="space-y-4 overflow-y-auto">
+          <div className="space-y-4 overflow-y-auto max-h-[calc(100vh-140px)]">
             <div className="flex items-center gap-2 mb-4">
-              <Link href="/problems" className="text-purple-400 hover:underline">
+              <Link href="/problems" className="text-purple-400 hover:underline flex items-center gap-1">
                 ← Back to Problems
               </Link>
             </div>
 
             <Card className="bg-gray-800 border-gray-700">
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-2xl text-white">
-                    {problemData.id}. {problemData.title}
-                  </CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className={getDifficultyColor(problemData.difficulty)}>
-                      {problemData.difficulty}
-                    </Badge>
-                    <Badge variant="outline" className="border-gray-600 text-gray-300">
-                      {problemData.category}
-                    </Badge>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <CardTitle className="text-2xl text-white mb-2">
+                      {problemData.id}. {problemData.title}
+                    </CardTitle>
+                    <div className="flex items-center gap-2 mb-3">
+                      <Badge variant="secondary" className={getDifficultyColor(problemData.difficulty)}>
+                        {problemData.difficulty}
+                      </Badge>
+                      <Badge variant="outline" className="border-gray-600 text-gray-300">
+                        {problemData.category}
+                      </Badge>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-4 text-sm text-gray-400">
+                <div className="flex items-center gap-4 text-sm text-gray-400 flex-wrap">
                   <span>Acceptance: {problemData.acceptance}</span>
                   <span>Submissions: {problemData.submissions}</span>
                   <div className="flex items-center gap-1">
@@ -225,9 +227,9 @@ export default function ProblemPage({ params }: { params: { id: string } }) {
             </Card>
           </div>
 
-          {/* Code Editor */}
+          {/* Code Editor - ensure proper height and visibility */}
           <div className="space-y-4">
-            <Card className="h-full flex flex-col bg-gray-800 border-gray-700">
+            <Card className="h-full flex flex-col bg-gray-800 border-gray-700 min-h-[600px]">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-white">Code Editor</CardTitle>

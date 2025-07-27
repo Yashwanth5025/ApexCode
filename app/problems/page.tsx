@@ -236,17 +236,17 @@ export default function ProblemsPage() {
               className="hover:shadow-lg transition-shadow bg-gray-800 border-gray-700 hover:border-gray-600"
             >
               <CardContent className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3 mb-2 flex-wrap">
                       {problem.solved ? (
-                        <CheckCircle className="w-5 h-5 text-green-400" />
+                        <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
                       ) : (
-                        <Clock className="w-5 h-5 text-gray-500" />
+                        <Clock className="w-5 h-5 text-gray-500 flex-shrink-0" />
                       )}
                       <Link
                         href={`/problems/${problem.id}`}
-                        className="text-lg font-semibold text-white hover:text-purple-400 transition-colors"
+                        className="text-lg font-semibold text-white hover:text-purple-400 transition-colors truncate"
                       >
                         {problem.id}. {problem.title}
                       </Link>
@@ -257,19 +257,19 @@ export default function ProblemsPage() {
                         {problem.category}
                       </Badge>
                     </div>
-                    <p className="text-gray-400 mb-3">{problem.description}</p>
+                    <p className="text-gray-400 mb-3 line-clamp-2">{problem.description}</p>
                     <div className="flex items-center gap-4 text-sm text-gray-500">
                       <span>Acceptance: {problem.acceptance}</span>
                       <span>Submissions: {problem.submissions}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 ml-4">
+                  <div className="flex items-center gap-2 flex-shrink-0">
                     <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white hover:bg-gray-700">
                       <Star className="w-4 h-4" />
                     </Button>
                     <Button
                       asChild
-                      className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                      className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
                     >
                       <Link href={`/problems/${problem.id}`}>Solve</Link>
                     </Button>
