@@ -7,7 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Code, Search, Filter, CheckCircle, Clock, Star } from "lucide-react"
+import { Code, Search, Filter, CheckCircle, Clock, Star, Plus, User, LogOut } from "lucide-react"
+import { useAuth } from "@/lib/auth"
+import { LoginForm } from "@/components/auth/login-form"
+import { RegisterForm } from "@/components/auth/register-form"
+import { CreateProblemForm } from "@/components/problems/create-problem-form"
 
 interface Problem {
   id: number
@@ -21,11 +25,16 @@ interface Problem {
 }
 
 export default function ProblemsPage() {
+  const { user, logout, token } = useAuth()
   const [searchTerm, setSearchTerm] = useState("")
   const [difficultyFilter, setDifficultyFilter] = useState("all")
   const [categoryFilter, setCategoryFilter] = useState("all")
   const [problems, setProblems] = useState<Problem[]>([])
+  const [customProblems, setCustomProblems] = useState<Problem[]>([])
   const [loading, setLoading] = useState(true)
+  const [showLogin, setShowLogin] = useState(false)
+  const [showRegister, setShowRegister] = useState(false)
+  const [showCreateProblem, setShowCreateProblem] = useState(false)
 
   useEffect(() => {
     fetchProblems()
@@ -33,17 +42,28 @@ export default function ProblemsPage() {
 
   const fetchProblems = async () => {
     try {
-      const response = await fetch("/api/problems")
-      if (response.ok) {
-        const data = await response.json()
+      const [problemsResponse, customProblemsResponse] = await Promise.all([
+        fetch("/api/problems"),
+        fetch("/api/problems/create")
+      ])
+      
+      if (problemsResponse.ok) {
+        const data = await problemsResponse.json()
         // Add solved status randomly for demo purposes
         const problemsWithSolvedStatus = data.problems.map((problem: Problem) => ({
           ...problem,
           solved: Math.random() > 0.5, // Random solved status for demo
         }))
         setProblems(problemsWithSolvedStatus)
-      } else {
-        console.error("Failed to fetch problems")
+      }
+      
+      if (customProblemsResponse.ok) {
+        const customData = await customProblemsResponse.json()
+        const customProblemsWithSolvedStatus = customData.problems.map((problem: Problem) => ({
+          ...problem,
+          solved: Math.random() > 0.5,
+        }))
+        setCustomProblems(customProblemsWithSolvedStatus)
       }
     } catch (error) {
       console.error("Error fetching problems:", error)
@@ -52,7 +72,9 @@ export default function ProblemsPage() {
     }
   }
 
-  const filteredProblems = problems.filter((problem) => {
+  const allProblems = [...problems, ...customProblems]
+  
+  const filteredProblems = allProblems.filter((problem) => {
     const matchesSearch =
       problem.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       problem.description.toLowerCase().includes(searchTerm.toLowerCase())
@@ -77,7 +99,7 @@ export default function ProblemsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-900">
+      <div className="min-h-screen bg-black">
         <div className="container mx-auto px-4 py-8">
           <div className="text-center text-white">Loading problems...</div>
         </div>
@@ -86,20 +108,20 @@ export default function ProblemsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen bg-black">
       {/* Header */}
       <header className="border-b border-gray-700 bg-gray-900 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
-              <Code className="w-5 h-5 text-white" />
+            <div className="w-8 h-8 bg-gray-800 border border-gray-600 rounded-lg flex items-center justify-center">
+              <Code className="w-5 h-5 text-gray-300" />
             </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+            <span className="text-2xl font-bold text-gray-300">
               ApexCode
             </span>
           </Link>
           <nav className="hidden md:flex items-center space-x-6">
-            <Link href="/problems" className="text-purple-400 font-medium">
+            <Link href="/problems" className="text-gray-300 font-medium">
               Problems
             </Link>
             <Link href="/contests" className="text-gray-300 hover:text-white transition-colors">
@@ -110,12 +132,44 @@ export default function ProblemsPage() {
             </Link>
           </nav>
           <div className="flex items-center space-x-3">
-            <Button variant="ghost" className="text-gray-300 hover:text-white hover:bg-gray-800">
-              Sign In
-            </Button>
-            <Button className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700">
-              Sign Up
-            </Button>
+            {user ? (
+              <div className="flex items-center space-x-3">
+                <Button
+                  onClick={() => setShowCreateProblem(true)}
+                  className="bg-gray-700 hover:bg-gray-600 text-white border border-gray-600"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Problem
+                </Button>
+                <div className="flex items-center space-x-2 text-gray-300">
+                  <User className="w-4 h-4" />
+                  <span>{user.username}</span>
+                </div>
+                <Button
+                  variant="ghost"
+                  onClick={logout}
+                  className="text-gray-300 hover:text-white hover:bg-gray-800"
+                >
+                  <LogOut className="w-4 h-4" />
+                </Button>
+              </div>
+            ) : (
+              <>
+                <Button
+                  variant="ghost"
+                  onClick={() => setShowLogin(true)}
+                  className="text-gray-300 hover:text-white hover:bg-gray-800"
+                >
+                  Sign In
+                </Button>
+                <Button
+                  onClick={() => setShowRegister(true)}
+                  className="bg-gray-700 hover:bg-gray-600 text-white border border-gray-600"
+                >
+                  Sign Up
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -209,7 +263,7 @@ export default function ProblemsPage() {
                       )}
                       <Link
                         href={`/problems/${problem.id}`}
-                        className="text-lg font-semibold text-white hover:text-purple-400 transition-colors truncate"
+                        className="text-lg font-semibold text-white hover:text-gray-300 transition-colors truncate"
                       >
                         {problem.id}. {problem.title}
                       </Link>
@@ -223,7 +277,7 @@ export default function ProblemsPage() {
                     <p className="text-gray-400 mb-3 line-clamp-2">{problem.description}</p>
                     <div className="flex items-center gap-4 text-sm text-gray-500">
                       <span>Acceptance: {problem.acceptance}</span>
-                      <span>Submissions: {problem.submissions}</span>
+                      <span>Submissions: {problem.submissionCount}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
@@ -232,7 +286,7 @@ export default function ProblemsPage() {
                     </Button>
                     <Button
                       asChild
-                      className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
+                      className="bg-gray-700 hover:bg-gray-600 text-white border border-gray-600"
                     >
                       <Link href={`/problems/${problem.id}`}>Solve</Link>
                     </Button>
@@ -262,6 +316,63 @@ export default function ProblemsPage() {
           </Card>
         )}
       </div>
+
+      {/* Auth Modals */}
+      {showLogin && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <LoginForm
+            onClose={() => setShowLogin(false)}
+            onSwitchToRegister={() => {
+              setShowLogin(false)
+              setShowRegister(true)
+            }}
+          />
+        </div>
+      )}
+
+      {showRegister && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <RegisterForm
+            onClose={() => setShowRegister(false)}
+            onSwitchToLogin={() => {
+              setShowRegister(false)
+              setShowLogin(true)
+            }}
+          />
+        </div>
+      )}
+
+      {showCreateProblem && user && (
+        <CreateProblemForm
+          onClose={() => setShowCreateProblem(false)}
+          onSubmit={async (problemData) => {
+            try {
+              const response = await fetch("/api/problems/create", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": `Bearer ${token}`,
+                },
+                body: JSON.stringify(problemData),
+              })
+
+              if (response.ok) {
+                const data = await response.json()
+                setCustomProblems([...customProblems, data.problem])
+                setShowCreateProblem(false)
+                // Refresh to show the new problem
+                window.location.reload()
+              } else {
+                const errorData = await response.json()
+                console.error("Error creating problem:", errorData.error)
+              }
+            } catch (error) {
+              console.error("Error creating problem:", error)
+            }
+          }}
+          userId={user.id}
+        />
+      )}
     </div>
   )
 }

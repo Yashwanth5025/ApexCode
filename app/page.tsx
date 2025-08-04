@@ -1,20 +1,54 @@
+"use client"
+
+import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Trophy, Users, Code, TrendingUp } from "lucide-react"
+import { Trophy, Users, Code, TrendingUp, Plus, User, LogOut } from "lucide-react"
+import { useAuth } from "@/lib/auth"
+import { LoginForm } from "@/components/auth/login-form"
+import { RegisterForm } from "@/components/auth/register-form"
+import { CreateProblemForm } from "@/components/problems/create-problem-form"
 
 export default function HomePage() {
+  const { user, logout } = useAuth()
+  const [showLogin, setShowLogin] = useState(false)
+  const [showRegister, setShowRegister] = useState(false)
+  const [showCreateProblem, setShowCreateProblem] = useState(false)
+  const [customProblems, setCustomProblems] = useState<any[]>([])
+
+  const handleCreateProblem = async (problemData: any) => {
+    try {
+      const response = await fetch("/api/problems/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(problemData),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setCustomProblems([...customProblems, data.problem])
+        // Refresh the page to show the new problem
+        window.location.reload()
+      }
+    } catch (error) {
+      console.error("Error creating problem:", error)
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
+    <div className="min-h-screen bg-black">
       {/* Header */}
       <header className="border-b border-gray-700 bg-gray-900/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
-              <Code className="w-5 h-5 text-white" />
+            <div className="w-8 h-8 bg-gray-800 border border-gray-600 rounded-lg flex items-center justify-center">
+              <Code className="w-5 h-5 text-gray-300" />
             </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+            <span className="text-2xl font-bold text-gray-300">
               ApexCode
             </span>
           </div>
@@ -33,12 +67,44 @@ export default function HomePage() {
             </Link>
           </nav>
           <div className="flex items-center space-x-3">
-            <Button variant="ghost" className="text-gray-300 hover:text-white hover:bg-gray-800">
-              Sign In
-            </Button>
-            <Button className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700">
-              Sign Up
-            </Button>
+            {user ? (
+              <div className="flex items-center space-x-3">
+                <Button
+                  onClick={() => setShowCreateProblem(true)}
+                  className="bg-gray-700 hover:bg-gray-600 text-white border border-gray-600"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Problem
+                </Button>
+                <div className="flex items-center space-x-2 text-gray-300">
+                  <User className="w-4 h-4" />
+                  <span>{user.username}</span>
+                </div>
+                <Button
+                  variant="ghost"
+                  onClick={logout}
+                  className="text-gray-300 hover:text-white hover:bg-gray-800"
+                >
+                  <LogOut className="w-4 h-4" />
+                </Button>
+              </div>
+            ) : (
+              <>
+                <Button
+                  variant="ghost"
+                  onClick={() => setShowLogin(true)}
+                  className="text-gray-300 hover:text-white hover:bg-gray-800"
+                >
+                  Sign In
+                </Button>
+                <Button
+                  onClick={() => setShowRegister(true)}
+                  className="bg-gray-700 hover:bg-gray-600 text-white border border-gray-600"
+                >
+                  Sign Up
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -46,7 +112,7 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-16 text-center">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent">
+          <h1 className="text-5xl md:text-6xl font-bold mb-6 text-white">
             Master Competitive Programming
           </h1>
           <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
@@ -56,7 +122,7 @@ export default function HomePage() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button
               size="lg"
-              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+              className="bg-gray-700 hover:bg-gray-600 text-white border border-gray-600"
               asChild
             >
               <Link href="/problems">Start Solving</Link>
@@ -75,34 +141,34 @@ export default function HomePage() {
       {/* Stats Section */}
       <section className="container mx-auto px-4 py-16">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card className="text-center bg-gray-800 border-gray-700">
-            <CardHeader>
-              <Code className="w-8 h-8 mx-auto text-purple-400" />
-              <CardTitle className="text-2xl text-white">2,500+</CardTitle>
-              <CardDescription className="text-gray-400">Coding Problems</CardDescription>
-            </CardHeader>
-          </Card>
-          <Card className="text-center bg-gray-800 border-gray-700">
-            <CardHeader>
-              <Users className="w-8 h-8 mx-auto text-blue-400" />
-              <CardTitle className="text-2xl text-white">50K+</CardTitle>
-              <CardDescription className="text-gray-400">Active Users</CardDescription>
-            </CardHeader>
-          </Card>
-          <Card className="text-center bg-gray-800 border-gray-700">
-            <CardHeader>
-              <Trophy className="w-8 h-8 mx-auto text-yellow-400" />
-              <CardTitle className="text-2xl text-white">1,200+</CardTitle>
-              <CardDescription className="text-gray-400">Contests Held</CardDescription>
-            </CardHeader>
-          </Card>
-          <Card className="text-center bg-gray-800 border-gray-700">
-            <CardHeader>
-              <TrendingUp className="w-8 h-8 mx-auto text-green-400" />
-              <CardTitle className="text-2xl text-white">95%</CardTitle>
-              <CardDescription className="text-gray-400">Success Rate</CardDescription>
-            </CardHeader>
-          </Card>
+                      <Card className="text-center bg-gray-800 border-gray-700">
+              <CardHeader>
+                <Code className="w-8 h-8 mx-auto text-gray-300" />
+                <CardTitle className="text-2xl text-white">2,500+</CardTitle>
+                <CardDescription className="text-gray-400">Coding Problems</CardDescription>
+              </CardHeader>
+            </Card>
+            <Card className="text-center bg-gray-800 border-gray-700">
+              <CardHeader>
+                <Users className="w-8 h-8 mx-auto text-gray-300" />
+                <CardTitle className="text-2xl text-white">50K+</CardTitle>
+                <CardDescription className="text-gray-400">Active Users</CardDescription>
+              </CardHeader>
+            </Card>
+            <Card className="text-center bg-gray-800 border-gray-700">
+              <CardHeader>
+                <Trophy className="w-8 h-8 mx-auto text-gray-300" />
+                <CardTitle className="text-2xl text-white">1,200+</CardTitle>
+                <CardDescription className="text-gray-400">Contests Held</CardDescription>
+              </CardHeader>
+            </Card>
+            <Card className="text-center bg-gray-800 border-gray-700">
+              <CardHeader>
+                <TrendingUp className="w-8 h-8 mx-auto text-gray-300" />
+                <CardTitle className="text-2xl text-white">95%</CardTitle>
+                <CardDescription className="text-gray-400">Success Rate</CardDescription>
+              </CardHeader>
+            </Card>
         </div>
       </section>
 
@@ -188,10 +254,10 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center space-x-2 mb-4">
-                <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
-                  <Code className="w-5 h-5 text-white" />
+                <div className="w-8 h-8 bg-gray-800 border border-gray-600 rounded-lg flex items-center justify-center">
+                  <Code className="w-5 h-5 text-gray-300" />
                 </div>
-                <span className="text-xl font-bold">ApexCode</span>
+                <span className="text-xl font-bold text-gray-300">ApexCode</span>
               </div>
               <p className="text-gray-400">The ultimate platform for competitive programming and coding challenges.</p>
             </div>
@@ -261,6 +327,39 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
+
+      {/* Auth Modals */}
+      {showLogin && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <LoginForm
+            onClose={() => setShowLogin(false)}
+            onSwitchToRegister={() => {
+              setShowLogin(false)
+              setShowRegister(true)
+            }}
+          />
+        </div>
+      )}
+
+      {showRegister && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <RegisterForm
+            onClose={() => setShowRegister(false)}
+            onSwitchToLogin={() => {
+              setShowRegister(false)
+              setShowLogin(true)
+            }}
+          />
+        </div>
+      )}
+
+      {showCreateProblem && user && (
+        <CreateProblemForm
+          onClose={() => setShowCreateProblem(false)}
+          onSubmit={handleCreateProblem}
+          userId={user.id}
+        />
+      )}
     </div>
   )
 }
